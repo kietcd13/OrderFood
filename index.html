@@ -452,8 +452,8 @@
                               <span className="text-sm font-medium text-gray-700">Số lượng:</span>
                               <span className="font-bold text-lg text-blue-600">{qty}</span>
                             </div>
-                            <input type="range" min="0" max="20" step="2" value={qty} onChange={(e) => handleSliderChange(item.id, e.target.value)} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"/>
-                            <div className="flex justify-between text-xs text-gray-400 mt-1"><span>0</span><span>20</span></div>
+                            <input type="range" min="0" max="10" step="2" value={qty} onChange={(e) => handleSliderChange(item.id, e.target.value)} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"/>
+                            <div className="flex justify-between text-xs text-gray-400 mt-1"><span>0</span><span>10</span></div>
                           </div>
                         </div>
                       );
