@@ -156,6 +156,7 @@
         const [foodName, setFoodName] = useState('');
         const [foodNote, setFoodNote] = useState('');
         const [activeTab, setActiveTab] = useState('menu');
+        const [selectedUserFilter, setSelectedUserFilter] = useState('all');
 
         const handleCreateUser = async (e) => {
           e.preventDefault();
@@ -244,9 +245,17 @@
                   <div className="mt-8">
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {users.filter(u => u.role !== 'admin').map((u, idx) => (
-                        <li key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded text-sm flex justify-between">
-                          <span>User: <strong>{u.username}</strong></span>
-                          <span className="text-gray-500">Pass: {u.password}</span>
+                        <li key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded text-sm flex justify-between items-center">
+                          <div>
+                            <span>User: <strong>{u.username}</strong></span>
+                            <span className="text-gray-500 ml-3">Pass: {u.password}</span>
+                          </div>
+                          <button 
+                            onClick={() => { setActiveTab('orders'); setSelectedUserFilter(u.username); }}
+                            className="text-blue-600 hover:text-blue-800 font-medium underline text-xs"
+                          >
+                            Xem lịch sử
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -256,8 +265,20 @@
 
               {activeTab === 'orders' && (
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Icon name="ClipboardList" size={20}/> Đơn hàng hôm nay</h2>
-                  {orders.length === 0 ? <p className="text-gray-500 italic">Chưa có ai đặt món.</p> : (
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <h2 className="text-lg font-bold flex items-center gap-2"><Icon name="ClipboardList" size={20}/> Quản lý đơn hàng</h2>
+                    <select
+                      value={selectedUserFilter}
+                      onChange={(e) => setSelectedUserFilter(e.target.value)}
+                      className="p-2 border border-gray-300 rounded outline-none focus:border-blue-500 bg-gray-50 min-w-[200px]"
+                    >
+                      <option value="all">Tất cả người dùng</option>
+                      {users.filter(u => u.role !== 'admin').map((u, idx) => (
+                        <option key={idx} value={u.username}>{u.username}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {orders.filter(o => selectedUserFilter === 'all' || o.username === selectedUserFilter).length === 0 ? <p className="text-gray-500 italic">Không có đơn hàng nào.</p> : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -271,7 +292,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          {orders.map((order) => {
+                          {orders.filter(o => selectedUserFilter === 'all' || o.username === selectedUserFilter).map((order) => {
                             const item = menuItems.find(m => m.id === order.itemId);
                             return (
                               <tr key={order.id} className="border-b hover:bg-gray-50">
