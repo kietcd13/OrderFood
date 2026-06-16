@@ -35,6 +35,19 @@
     const getColl = (name) => collection(db, 'artifacts', 'food-order', 'public', 'data', name);
     const getDocRef = (name, docId) => doc(db, 'artifacts', 'food-order', 'public', 'data', name, docId);
 
+    // Hàm lấy giờ chuẩn Việt Nam (GMT+7)
+    const getVietnamTime = () => {
+      const d = new Date();
+      const vnTimeStr = d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+      const vnDate = new Date(vnTimeStr);
+      const yyyy = vnDate.getFullYear();
+      const mth = String(vnDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(vnDate.getDate()).padStart(2, '0');
+      const hh = String(vnDate.getHours()).padStart(2, '0');
+      const mm = String(vnDate.getMinutes()).padStart(2, '0');
+      return { date: `${yyyy}-${mth}-${dd}`, time: `${hh}:${mm}` };
+    };
+
     const Icon = ({ name, size = 24, className = "" }) => {
       const paths = {
         UserPlus: <g><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></g>,
@@ -120,12 +133,7 @@
       const [filterUser, setFilterUser] = useState('all');
       const [filterDate, setFilterDate] = useState('');
 
-      // Lấy ngày chuẩn theo múi giờ địa phương
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mth = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${yyyy}-${mth}-${dd}`;
+      const { date: todayStr } = getVietnamTime();
 
       const handleCreateUser = async (e) => {
         e.preventDefault();
@@ -399,16 +407,7 @@
         let totalItems = 0;
         let orderedCount = 0;
         
-        // Cố định định dạng giờ:phút để không bị lỗi hiển thị
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mth = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const todayStr = `${yyyy}-${mth}-${dd}`;
-        
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        const timeStr = `${hh}:${mm}`;
+        const { date: todayStr, time: timeStr } = getVietnamTime();
 
         const promises = Object.entries(quantities).map(async ([itemId, qty]) => {
           if (qty > 0) {
@@ -656,11 +655,7 @@
           const ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           setOrders(ordersData);
 
-          const now = new Date();
-          const yyyy = now.getFullYear();
-          const mth = String(now.getMonth() + 1).padStart(2, '0');
-          const dd = String(now.getDate()).padStart(2, '0');
-          const todayStr = `${yyyy}-${mth}-${dd}`;
+          const { date: todayStr } = getVietnamTime();
 
           ordersData.forEach(order => {
             if (order.date === undefined || order.time === undefined) {
