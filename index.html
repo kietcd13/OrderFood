@@ -120,7 +120,12 @@
       const [filterUser, setFilterUser] = useState('all');
       const [filterDate, setFilterDate] = useState('');
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      // Lấy ngày chuẩn theo múi giờ địa phương
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mth = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mth}-${dd}`;
 
       const handleCreateUser = async (e) => {
         e.preventDefault();
@@ -393,9 +398,17 @@
       const handleOrder = async () => {
         let totalItems = 0;
         let orderedCount = 0;
+        
+        // Cố định định dạng giờ:phút để không bị lỗi hiển thị
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const yyyy = now.getFullYear();
+        const mth = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mth}-${dd}`;
+        
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const timeStr = `${hh}:${mm}`;
 
         const promises = Object.entries(quantities).map(async ([itemId, qty]) => {
           if (qty > 0) {
@@ -643,9 +656,14 @@
           const ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           setOrders(ordersData);
 
-          const todayStr = new Date().toISOString().split('T')[0];
+          const now = new Date();
+          const yyyy = now.getFullYear();
+          const mth = String(now.getMonth() + 1).padStart(2, '0');
+          const dd = String(now.getDate()).padStart(2, '0');
+          const todayStr = `${yyyy}-${mth}-${dd}`;
+
           ordersData.forEach(order => {
-            if (!order.date || !order.time) {
+            if (order.date === undefined || order.time === undefined) {
               updateDoc(getDocRef('orders', order.id), { 
                 date: order.date || todayStr,
                 time: order.time || '--:--'
