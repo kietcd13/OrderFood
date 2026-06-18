@@ -3,12 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ Thống Đặt Đồ Ăn</title>
+  <title>Ẩm Thực Sân Cỏ - Fine Dining</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Bản đồ thư viện (Import Map) giúp trình duyệt tự tìm và tải đúng file React -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #09090b; /* Zinc 950 */
+      color: #e4e4e7; /* Zinc 200 */
+    }
+
+    .font-serif {
+      font-family: 'Playfair Display', serif;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #18181b; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #d4af37; }
+
+    /* Custom Slider (Range) */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+      width: 100%;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      cursor: pointer;
+      background: #3f3f46;
+      border-radius: 2px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 18px;
+      width: 18px;
+      background: #d4af37;
+      border-radius: 50%;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -7px;
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+      transition: all 0.2s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      background: #e6c555;
+    }
+
+    /* Custom Radio Buttons */
+    input[type=radio] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1px solid #52525b;
+      border-radius: 50%;
+      background: transparent;
+      margin-right: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+    input[type=radio]:checked {
+      border-color: #d4af37;
+    }
+    input[type=radio]:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d4af37;
+    }
+
+    /* Common Components */
+    .lux-card {
+      background-color: #18181b; /* Zinc 900 */
+      border: 1px solid #27272a; /* Zinc 800 */
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+    
+    .lux-input {
+      background-color: #09090b;
+      border: 1px solid #3f3f46;
+      color: #e4e4e7;
+      padding: 10px 16px;
+      border-radius: 6px;
+      width: 100%;
+      transition: all 0.2s;
+      font-weight: 300;
+    }
+    .lux-input:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.5);
+    }
+
+    .lux-btn {
+      background-color: #d4af37; /* Classic Gold */
+      color: #09090b;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lux-btn:hover {
+      background-color: #e6c555;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+    }
+    .lux-btn-outline {
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      background: transparent;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .lux-btn-outline:hover {
+      background-color: rgba(212, 175, 55, 0.1);
+    }
+  </style>
+
   <script type="importmap">
     {
       "imports": {
@@ -23,11 +148,8 @@
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
-    // Import thư viện React từ Import Map
     import React, { useState, useEffect } from 'react';
     import { createRoot } from 'react-dom/client';
-    
-    // Import Firebase
     import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
@@ -48,7 +170,6 @@
     const getColl = (name) => collection(db, 'artifacts', 'food-order', 'public', 'data', name);
     const getDocRef = (name, docId) => doc(db, 'artifacts', 'food-order', 'public', 'data', name, docId);
 
-    // Hàm lấy giờ chuẩn Việt Nam (GMT+7)
     const getVietnamTime = () => {
       const d = new Date();
       const vnTimeStr = d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
@@ -61,7 +182,8 @@
       return { date: `${yyyy}-${mth}-${dd}`, time: `${hh}:${mm}` };
     };
 
-    const Icon = ({ name, size = 24, className = "" }) => {
+    // Hệ thống Icon nét mảnh thanh lịch (Lucide Icons SVG)
+    const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
         UserPlus: <g><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></g>,
         PlusCircle: <g><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></g>,
@@ -76,10 +198,11 @@
         CheckCircle: <g><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></g>,
         Clock: <g><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></g>,
         Key: <g><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></g>,
-        Calendar: <g><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></g>
+        Calendar: <g><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></g>,
+        Menu: <g><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></g>
       };
       return (
-        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
           {paths[name]}
         </svg>
       );
@@ -97,40 +220,53 @@
           setCurrentUser(user);
           setError('');
         } else {
-          setError('Sai tên đăng nhập hoặc mật khẩu!');
+          setError('Thông tin đăng nhập không chính xác.');
         }
       };
 
       return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-black">
+          {/* Background Ảnh nhà hàng sang trọng */}
+          <div 
+            className="absolute inset-0 z-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1414235077428-33898dd1a561?q=80&w=2069&auto=format&fit=crop')`,
+              opacity: 0.4
+            }}
+          />
+          
+          <div className="w-full max-w-md z-10 p-8 rounded-2xl bg-zinc-950/80 backdrop-blur-md border border-zinc-800 shadow-2xl">
             <div className="flex flex-col items-center mb-8">
-              <div className="bg-blue-100 p-3 rounded-full text-blue-600 mb-4">
-                <Icon name="Utensils" size={32} />
+              <div className="w-16 h-16 rounded-full border border-[#d4af37] flex items-center justify-center mb-4 text-[#d4af37]">
+                <Icon name="Utensils" size={28} />
               </div>
-              <h1 className="text-2xl font-bold text-gray-800">Hệ Thống Đặt Đồ Ăn</h1>
+              <h1 className="text-3xl font-serif text-white tracking-widest text-center">Ẩm Thực Sân Cỏ</h1>
+              <p className="text-[#d4af37] text-sm tracking-widest uppercase mt-2 font-light">Fine Dining Experience</p>
             </div>
-            <form onSubmit={handleLogin} className="space-y-4">
+            
+            <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
+                <label className="block text-zinc-400 text-xs tracking-wider uppercase mb-2">Tên đăng nhập</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <Icon name="User" size={18} />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+                    <Icon name="User" size={16} />
                   </div>
-                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="lux-input pl-10" required />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                <label className="block text-zinc-400 text-xs tracking-wider uppercase mb-2">Mật khẩu</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <Icon name="Lock" size={18} />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+                    <Icon name="Lock" size={16} />
                   </div>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="lux-input pl-10" required />
                 </div>
               </div>
-              {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Đăng Nhập</button>
+              {error && <p className="text-red-400 text-sm text-center bg-red-950/30 py-2 rounded border border-red-900">{error}</p>}
+              <button type="submit" className="lux-btn w-full py-3 mt-4 text-sm tracking-widest">
+                Đăng nhập
+              </button>
             </form>
           </div>
         </div>
@@ -151,13 +287,13 @@
       const handleCreateUser = async (e) => {
         e.preventDefault();
         if (users.some(u => u.username === newUsername)) {
-          showMessage('Tên người dùng đã tồn tại!');
+          showMessage('Tên người dùng đã tồn tại.');
           return;
         }
         await addDoc(getColl('users'), { username: newUsername, password: newPassword, role: 'user' });
         setNewUsername('');
         setNewPassword('');
-        showMessage('Tạo người dùng thành công!');
+        showMessage('Đã cấp quyền thực khách thành công.');
       };
 
       const handleCreateFood = async (e) => {
@@ -165,7 +301,7 @@
         await addDoc(getColl('menuItems'), { name: foodName, note: foodNote, isActive: true });
         setFoodName('');
         setFoodNote('');
-        showMessage('Thêm món thành công!');
+        showMessage('Đã thêm món ăn vào thực đơn.');
       };
 
       const toggleFoodStatus = async (item) => {
@@ -173,7 +309,7 @@
       };
 
       const deleteFood = (itemId) => {
-        showConfirm("Xóa vĩnh viễn món ăn này?", async () => {
+        showConfirm("Bạn có chắc muốn xóa món này khỏi hệ thống?", async () => {
           await deleteDoc(getDocRef('menuItems', itemId));
         });
       };
@@ -182,136 +318,164 @@
         await updateDoc(getDocRef('orders', orderId), { status: 'confirmed' });
       };
 
+      const tabs = [
+        { id: 'menu', icon: 'PlusCircle', label: 'Quản lý Thực đơn' },
+        { id: 'users', icon: 'UserPlus', label: 'Cấp quyền' },
+        { id: 'orders', icon: 'ClipboardList', label: 'Đơn hôm nay' },
+        { id: 'history', icon: 'Calendar', label: 'Lịch sử' }
+      ];
+
       return (
-        <div className="min-h-screen bg-gray-50">
-          <header className="bg-white shadow-sm p-4 flex justify-between items-center">
-            <h1 className="text-xl font-bold flex items-center gap-2 text-blue-600">
-              <Icon name="ChefHat" size={24} /> Admin Panel
-            </h1>
-            <button onClick={() => setCurrentUser(null)} className="text-gray-500 hover:text-red-500 flex items-center gap-1">
-              <Icon name="LogOut" size={18} /> Đăng xuất
-            </button>
+        <div className="min-h-screen bg-zinc-950 pb-16">
+          {/* Header */}
+          <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-20">
+            <div className="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+              <h1 className="text-xl md:text-2xl font-serif text-white tracking-widest flex items-center gap-3">
+                <span className="text-[#d4af37]"><Icon name="ChefHat" size={24} /></span>
+                Ẩm Thực Sân Cỏ <span className="text-zinc-600 font-sans text-sm ml-2 hidden sm:inline">| Chef Dashboard</span>
+              </h1>
+              <button onClick={() => setCurrentUser(null)} className="text-zinc-400 hover:text-[#d4af37] flex items-center gap-2 text-sm uppercase tracking-wider transition-colors">
+                <span className="hidden sm:inline">Thoát</span> <Icon name="LogOut" size={18}/>
+              </button>
+            </div>
           </header>
 
-          <div className="max-w-4xl mx-auto mt-6 px-4 pb-12">
-            <div className="flex gap-2 mb-6 border-b border-gray-200 pb-2 overflow-x-auto">
-              <button onClick={() => setActiveTab('menu')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'menu' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Tạo Món Ăn</button>
-              <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'users' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Tạo Người Dùng</button>
-              <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'orders' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Đơn Hôm Nay</button>
-              <button onClick={() => setActiveTab('history')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'history' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Lịch Sử</button>
+          <div className="max-w-6xl mx-auto px-4 mt-8">
+            {/* Tabs */}
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-2 border-b border-zinc-800 scrollbar-hide">
+              {tabs.map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)} 
+                  className={`whitespace-nowrap px-5 py-3 text-sm font-medium tracking-wide uppercase flex items-center gap-2 transition-all ${activeTab === tab.id ? 'text-[#d4af37] border-b-2 border-[#d4af37]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                >
+                  <Icon name={tab.icon} size={16} /> {tab.label}
+                </button>
+              ))}
             </div>
 
+            {/* Content Areas */}
             {activeTab === 'menu' && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Icon name="PlusCircle" size={20}/> Thêm món cho hôm nay</h2>
-                <form onSubmit={handleCreateFood} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên món ăn</label>
-                    <input type="text" value={foodName} onChange={(e) => setFoodName(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" required />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
+                  <div className="lux-card p-6">
+                    <h2 className="font-serif text-xl text-white mb-6 border-b border-zinc-800 pb-3">Thêm Món Mới</h2>
+                    <form onSubmit={handleCreateFood} className="space-y-4">
+                      <div>
+                        <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Tên món</label>
+                        <input type="text" value={foodName} onChange={(e) => setFoodName(e.target.value)} className="lux-input" required placeholder="VD: Bò Wagyu A5..." />
+                      </div>
+                      <div>
+                        <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Mô tả / Ghi chú</label>
+                        <textarea value={foodNote} onChange={(e) => setFoodNote(e.target.value)} className="lux-input" rows="3" placeholder="Nguyên liệu, cách chế biến..." />
+                      </div>
+                      <button type="submit" className="lux-btn w-full py-3 mt-2 text-sm">Cập nhật vào Menu</button>
+                    </form>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
-                    <textarea value={foodNote} onChange={(e) => setFoodNote(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" rows="3" />
-                  </div>
-                  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700">Lưu Món</button>
-                </form>
+                </div>
 
-                <div className="mt-8">
-                  <h3 className="font-bold text-gray-700 mb-3">Danh sách món hôm nay:</h3>
-                  <ul className="space-y-2">
+                <div className="lg:col-span-2">
+                  <h3 className="font-serif text-xl text-white mb-6">Thực đơn hiện tại</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {menuItems.map(item => (
-                      <li key={item.id} className={`p-3 bg-gray-50 border border-gray-100 rounded flex justify-between items-center ${item.isActive === false ? 'opacity-50' : ''}`}>
-                        <div>
-                          <p className="font-bold">{item.name} {item.isActive === false && <span className="text-red-500 text-xs ml-2">(Đã ẩn)</span>}</p>
-                          <p className="text-sm text-gray-600">{item.note}</p>
+                      <div key={item.id} className={`lux-card p-5 flex flex-col justify-between transition-all ${item.isActive === false ? 'opacity-40 grayscale' : 'hover:border-zinc-600'}`}>
+                        <div className="mb-4">
+                          <p className="font-serif text-lg text-white flex justify-between items-start">
+                            {item.name} 
+                            {item.isActive === false && <span className="text-xs font-sans bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded uppercase tracking-wider">Đã Ẩn</span>}
+                          </p>
+                          <p className="text-sm text-zinc-400 mt-2 font-light">{item.note}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => toggleFoodStatus(item)} className="px-3 py-1 bg-gray-200 text-sm rounded hover:bg-gray-300 font-medium">
-                            {item.isActive === false ? 'Hiện' : 'Ẩn'}
+                        <div className="flex items-center gap-2 mt-auto border-t border-zinc-800 pt-4">
+                          <button onClick={() => toggleFoodStatus(item)} className="lux-btn-outline px-3 py-1.5 text-xs flex-1">
+                            {item.isActive === false ? 'Hiện món' : 'Ẩn món'}
                           </button>
-                          <button onClick={() => deleteFood(item.id)} className="p-1 text-red-500 hover:bg-red-50 rounded"><Icon name="Trash2" size={18}/></button>
+                          <button onClick={() => deleteFood(item.id)} className="text-red-400 hover:text-red-300 p-1.5 border border-transparent hover:border-red-900 rounded"><Icon name="Trash2" size={16}/></button>
                         </div>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'users' && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Icon name="UserPlus" size={20}/> Tạo tài khoản người đặt</h2>
-                <form onSubmit={handleCreateUser} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
-                    <input type="text" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" required />
+              <div className="lux-card p-6 max-w-xl">
+                <h2 className="font-serif text-xl text-white mb-6 border-b border-zinc-800 pb-3">Cấp quyền Thực khách</h2>
+                <form onSubmit={handleCreateUser} className="space-y-4 mb-8">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Tài khoản</label>
+                      <input type="text" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} className="lux-input" required />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Mật khẩu</label>
+                      <input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="lux-input" required />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
-                    <input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" required />
-                  </div>
-                  <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700">Tạo Tài Khoản</button>
+                  <button type="submit" className="lux-btn w-full py-3 text-sm">Tạo tài khoản</button>
                 </form>
-                <div className="mt-8">
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {users.filter(u => u.role !== 'admin').map((u, idx) => (
-                      <li key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded text-sm flex justify-between items-center">
-                        <div>
-                          <span>User: <strong>{u.username}</strong></span>
-                          <span className="text-gray-500 ml-3">Pass: {u.password}</span>
-                        </div>
-                        <button 
-                          onClick={() => { setActiveTab('history'); setFilterUser(u.username); setFilterDate(''); }}
-                          className="text-blue-600 hover:text-blue-800 font-medium underline text-xs"
-                        >
-                          Xem lịch sử
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                
+                <h3 className="font-serif text-lg text-white mb-4">Danh sách Khách V.I.P</h3>
+                <div className="space-y-3">
+                  {users.filter(u => u.role !== 'admin').map((u, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-zinc-800 bg-zinc-900/50">
+                      <div>
+                        <span className="text-white font-medium">{u.username}</span>
+                        <span className="text-zinc-500 text-sm ml-4 font-mono">Pass: {u.password}</span>
+                      </div>
+                      <button onClick={() => { setActiveTab('history'); setFilterUser(u.username); setFilterDate(''); }} className="text-[#d4af37] hover:text-white text-xs uppercase tracking-wider flex items-center gap-1 transition-colors">
+                        Lịch sử <Icon name="Calendar" size={12}/>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
             {activeTab === 'orders' && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                  <h2 className="text-lg font-bold flex items-center gap-2"><Icon name="ClipboardList" size={20}/> Đơn hàng hôm nay</h2>
+              <div className="lux-card p-6">
+                <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3">
+                  <h2 className="font-serif text-xl text-white">Yêu cầu phục vụ hôm nay</h2>
+                  <span className="text-[#d4af37] text-sm tracking-wider">{todayStr}</span>
                 </div>
-                {orders.filter(o => o.date === todayStr || !o.date).length === 0 ? <p className="text-gray-500 italic">Không có đơn hàng nào hôm nay.</p> : (
+                
+                {orders.filter(o => o.date === todayStr || !o.date).length === 0 ? (
+                  <p className="text-zinc-500 italic py-8 text-center font-light">Chưa có yêu cầu nào cho ngày hôm nay.</p>
+                ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="bg-gray-100">
-                          <th className="p-3 border-b">Thời gian</th>
-                          <th className="p-3 border-b">Người đặt</th>
-                          <th className="p-3 border-b">Món ăn</th>
-                          <th className="p-3 border-b">Tùy chọn</th>
-                          <th className="p-3 border-b">Số lượng</th>
-                          <th className="p-3 border-b">Trạng thái</th>
-                          <th className="p-3 border-b">Hành động</th>
+                        <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider text-xs">
+                          <th className="pb-3 px-4 font-medium">Giờ</th>
+                          <th className="pb-3 px-4 font-medium">Thực khách</th>
+                          <th className="pb-3 px-4 font-medium">Món ăn</th>
+                          <th className="pb-3 px-4 font-medium">Tùy chọn</th>
+                          <th className="pb-3 px-4 font-medium text-center">SL</th>
+                          <th className="pb-3 px-4 font-medium">Trạng thái</th>
+                          <th className="pb-3 px-4 font-medium text-right">Xác nhận</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-zinc-800/50">
                         {orders.filter(o => o.date === todayStr || !o.date).map((order) => {
                           const item = menuItems.find(m => m.id === order.itemId);
                           return (
-                            <tr key={order.id} className="border-b hover:bg-gray-50">
-                              <td className="p-3 text-sm text-gray-500">{order.time || '--:--'}</td>
-                              <td className="p-3 font-medium">{order.username}</td>
-                              <td className="p-3">{item ? item.name : 'Món đã xóa'}</td>
-                              <td className="p-3"><span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">{order.option}</span></td>
-                              <td className="p-3 font-bold text-blue-600">{order.quantity}</td>
-                              <td className="p-3">
+                            <tr key={order.id} className="hover:bg-zinc-800/20 transition-colors">
+                              <td className="py-4 px-4 text-zinc-300 font-mono">{order.time || '--:--'}</td>
+                              <td className="py-4 px-4 text-white font-medium">{order.username}</td>
+                              <td className="py-4 px-4 text-[#d4af37]">{item ? item.name : 'Món đã xóa'}</td>
+                              <td className="py-4 px-4"><span className="border border-zinc-700 bg-zinc-900 px-2 py-1 rounded text-xs text-zinc-300">{order.option}</span></td>
+                              <td className="py-4 px-4 text-center font-serif text-lg text-white">{order.quantity}</td>
+                              <td className="py-4 px-4">
                                 {order.status === 'confirmed' ? (
-                                  <span className="text-green-600 flex items-center gap-1 text-sm font-medium"><Icon name="CheckCircle" size={16}/> Đã chốt</span>
+                                  <span className="text-green-500/90 flex items-center gap-1.5 text-xs tracking-wide uppercase"><Icon name="CheckCircle" size={14} /> Đã chuẩn bị</span>
                                 ) : (
-                                  <span className="text-orange-500 flex items-center gap-1 text-sm font-medium"><Icon name="Clock" size={16}/> Chờ chốt</span>
+                                  <span className="text-amber-500/90 flex items-center gap-1.5 text-xs tracking-wide uppercase animate-pulse"><Icon name="Clock" size={14} /> Đang đợi</span>
                                 )}
                               </td>
-                              <td className="p-3">
+                              <td className="py-4 px-4 text-right">
                                 {order.status !== 'confirmed' && (
-                                  <button onClick={() => confirmOrder(order.id)} className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 font-medium">Xác nhận</button>
+                                  <button onClick={() => confirmOrder(order.id)} className="lux-btn-outline px-3 py-1.5 text-xs">Chốt đơn</button>
                                 )}
                               </td>
                             </tr>
@@ -325,26 +489,23 @@
             )}
 
             {activeTab === 'history' && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <h2 className="text-lg font-bold flex items-center gap-2"><Icon name="Calendar" size={20}/> Lịch sử đặt món</h2>
-                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <input 
-                      type="date" 
-                      value={filterDate}
-                      onChange={(e) => setFilterDate(e.target.value)}
-                      className="p-2 border border-gray-300 rounded outline-none focus:border-blue-500 bg-gray-50 text-sm"
-                    />
-                    <select
-                      value={filterUser}
-                      onChange={(e) => setFilterUser(e.target.value)}
-                      className="p-2 border border-gray-300 rounded outline-none focus:border-blue-500 bg-gray-50 min-w-[150px] text-sm"
-                    >
-                      <option value="all">Tất cả user</option>
-                      {users.filter(u => u.role !== 'admin').map((u, idx) => (
-                        <option key={idx} value={u.username}>{u.username}</option>
-                      ))}
-                    </select>
+              <div className="lux-card p-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 border-b border-zinc-800 pb-6">
+                  <h2 className="font-serif text-xl text-white">Sổ Ghi Chép Lịch Sử</h2>
+                  <div className="flex gap-4">
+                    <div>
+                      <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Ngày đặt</label>
+                      <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="lux-input py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Thực khách</label>
+                      <select value={filterUser} onChange={(e) => setFilterUser(e.target.value)} className="lux-input py-1.5 text-sm min-w-[120px]">
+                        <option value="all">Tất cả</option>
+                        {users.filter(u => u.role !== 'admin').map((u, idx) => (
+                          <option key={idx} value={u.username}>{u.username}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
                 
@@ -352,20 +513,20 @@
                   const matchDate = filterDate ? o.date === filterDate : true;
                   const matchUser = filterUser === 'all' ? true : o.username === filterUser;
                   return matchDate && matchUser;
-                }).length === 0 ? <p className="text-gray-500 italic">Không tìm thấy đơn hàng nào phù hợp.</p> : (
+                }).length === 0 ? <p className="text-zinc-500 italic text-center py-8 font-light">Không tìm thấy bản ghi nào.</p> : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="bg-gray-100">
-                          <th className="p-3 border-b text-sm font-semibold text-gray-600">Thời gian</th>
-                          <th className="p-3 border-b text-sm font-semibold text-gray-600">Người đặt</th>
-                          <th className="p-3 border-b text-sm font-semibold text-gray-600">Món ăn</th>
-                          <th className="p-3 border-b text-sm font-semibold text-gray-600">Tùy chọn</th>
-                          <th className="p-3 border-b text-sm font-semibold text-gray-600">Số lượng</th>
-                          <th className="p-3 border-b text-sm font-semibold text-gray-600">Trạng thái</th>
+                        <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider text-xs">
+                          <th className="pb-3 px-4 font-medium">Thời gian</th>
+                          <th className="pb-3 px-4 font-medium">Thực khách</th>
+                          <th className="pb-3 px-4 font-medium">Món ăn</th>
+                          <th className="pb-3 px-4 font-medium">Tùy chọn</th>
+                          <th className="pb-3 px-4 font-medium text-center">SL</th>
+                          <th className="pb-3 px-4 font-medium">Trạng thái</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-zinc-800/50">
                         {orders.filter(o => {
                           const matchDate = filterDate ? o.date === filterDate : true;
                           const matchUser = filterUser === 'all' ? true : o.username === filterUser;
@@ -373,20 +534,20 @@
                         }).sort((a, b) => new Date(b.date || '2000-01-01') - new Date(a.date || '2000-01-01')).map((order) => {
                           const item = menuItems.find(m => m.id === order.itemId);
                           return (
-                            <tr key={order.id} className="border-b hover:bg-gray-50">
-                              <td className="p-3 text-sm text-gray-500">
-                                <div>{order.time || '--:--'}</div>
-                                <div className="text-xs text-gray-400">{order.date || 'Chưa rõ'}</div>
+                            <tr key={order.id} className="hover:bg-zinc-800/20 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="text-zinc-300 font-mono text-sm">{order.time || '--:--'}</div>
+                                <div className="text-zinc-500 text-xs mt-0.5">{order.date || '---'}</div>
                               </td>
-                              <td className="p-3 font-medium">{order.username}</td>
-                              <td className="p-3">{item ? item.name : 'Món đã xóa'}</td>
-                              <td className="p-3"><span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">{order.option}</span></td>
-                              <td className="p-3 font-bold text-blue-600">{order.quantity}</td>
-                              <td className="p-3">
+                              <td className="py-3 px-4 text-white font-medium">{order.username}</td>
+                              <td className="py-3 px-4 text-[#d4af37]">{item ? item.name : 'Món đã xóa'}</td>
+                              <td className="py-3 px-4"><span className="border border-zinc-700 bg-zinc-900 px-2 py-1 rounded text-xs text-zinc-300">{order.option}</span></td>
+                              <td className="py-3 px-4 text-center font-serif text-lg text-white">{order.quantity}</td>
+                              <td className="py-3 px-4">
                                 {order.status === 'confirmed' ? (
-                                  <span className="text-green-600 flex items-center gap-1 text-sm font-medium"><Icon name="CheckCircle" size={16}/> Đã chốt</span>
+                                  <span className="text-green-500/80 text-xs tracking-wide uppercase">Hoàn tất</span>
                                 ) : (
-                                  <span className="text-orange-500 flex items-center gap-1 text-sm font-medium"><Icon name="Clock" size={16}/> Chờ chốt</span>
+                                  <span className="text-amber-500/80 text-xs tracking-wide uppercase">Chờ duyệt</span>
                                 )}
                               </td>
                             </tr>
@@ -445,20 +606,20 @@
         await Promise.all(promises);
 
         if (orderedCount === 0) {
-          showMessage('Vui lòng chọn ít nhất 1 món để đặt!');
+          showMessage('Vui lòng chọn ít nhất một món để tiếp tục.');
           return;
         }
 
         setQuantities({});
         setSelectedMainOptions({});
         setSelectedSubOptions({});
-        showMessage(`Đã đặt thành công ${totalItems} phần lúc ${timeStr}!`);
+        showMessage(`Gửi yêu cầu thành công (${totalItems} phần). Nhà hàng sẽ sớm phục vụ bạn.`);
         setActiveTab('history');
       };
 
       const handleAdjustQuantity = async (orderId, newQty) => {
         if (newQty <= 0) {
-          showConfirm("Bạn có chắc muốn hủy đặt món này?", async () => {
+          showConfirm("Hủy yêu cầu món ăn này?", async () => {
             await deleteDoc(getDocRef('orders', orderId));
           });
         } else {
@@ -469,101 +630,111 @@
       const handleChangePassword = async (e) => {
         e.preventDefault();
         if (oldPass !== currentUser.password) {
-          showMessage('Mật khẩu cũ không chính xác!');
+          showMessage('Mật khẩu hiện tại không chính xác.');
           return;
         }
-        if (newPass.length < 3) {
-          showMessage('Mật khẩu mới quá ngắn!');
+        if (newPass.length < 4) {
+          showMessage('Mật khẩu mới cần ít nhất 4 ký tự.');
           return;
         }
         await updateDoc(getDocRef('users', currentUser.id), { password: newPass });
         setCurrentUser({...currentUser, password: newPass});
         setOldPass('');
         setNewPass('');
-        showMessage('Đổi mật khẩu thành công!');
+        showMessage('Đổi mật khẩu thành công.');
       };
 
       const myOrders = orders.filter(o => o.username === currentUser.username).sort((a, b) => new Date(b.date || '2000-01-01') - new Date(a.date || '2000-01-01'));
-      
       const activeMenuItems = menuItems.filter(item => item.isActive !== false);
 
       return (
-        <div className="min-h-screen bg-gray-50 pb-24">
-          <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
-            <h1 className="text-xl font-bold flex items-center gap-2 text-green-600">
-              <Icon name="Utensils" size={24} /> Thực Đơn
-            </h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-gray-600">Chào, {currentUser.username}</span>
-              <button onClick={() => setCurrentUser(null)} className="text-gray-500 hover:text-red-500">
-                <Icon name="LogOut" size={20} />
-              </button>
+        <div className="min-h-screen bg-zinc-950 pb-32">
+          {/* Header */}
+          <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-20">
+            <div className="max-w-4xl mx-auto px-4 h-16 flex justify-between items-center">
+              <h1 className="text-xl md:text-2xl font-serif text-white tracking-widest flex items-center gap-3">
+                <span className="text-[#d4af37]"><Icon name="Utensils" size={20} /></span>
+                Ẩm Thực Sân Cỏ <span className="text-zinc-600 font-sans text-sm ml-2 hidden sm:inline">| Menu</span>
+              </h1>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-zinc-400 hidden sm:block">Xin chào, <strong className="text-white font-serif">{currentUser.username}</strong></span>
+                <button onClick={() => setCurrentUser(null)} className="text-zinc-400 hover:text-[#d4af37] transition-colors">
+                  <Icon name="LogOut" size={20} />
+                </button>
+              </div>
             </div>
           </header>
 
-          <div className="max-w-2xl mx-auto mt-6 px-4">
-            <div className="flex gap-2 mb-6 border-b border-gray-200 pb-2 overflow-x-auto">
-              <button onClick={() => setActiveTab('menu')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'menu' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'}`}>Đặt Món</button>
-              <button onClick={() => setActiveTab('history')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1 ${activeTab === 'history' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-                Đơn Của Tôi {myOrders.length > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{myOrders.length}</span>}
+          <div className="max-w-4xl mx-auto px-4 mt-8">
+            <div className="flex gap-4 mb-8 border-b border-zinc-800 pb-2">
+              <button onClick={() => setActiveTab('menu')} className={`pb-2 px-2 text-sm font-medium tracking-wide uppercase transition-all ${activeTab === 'menu' ? 'text-[#d4af37] border-b-2 border-[#d4af37]' : 'text-zinc-500 hover:text-zinc-300'}`}>Thực Đơn</button>
+              <button onClick={() => setActiveTab('history')} className={`pb-2 px-2 text-sm font-medium tracking-wide uppercase transition-all flex items-center gap-2 ${activeTab === 'history' ? 'text-[#d4af37] border-b-2 border-[#d4af37]' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                Đơn Của Tôi {myOrders.length > 0 && <span className="bg-[#d4af37] text-zinc-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{myOrders.length}</span>}
               </button>
-              <button onClick={() => setActiveTab('profile')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1 ${activeTab === 'profile' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-                <Icon name="Key" size={16}/> Mật Khẩu
-              </button>
+              <button onClick={() => setActiveTab('profile')} className={`pb-2 px-2 text-sm font-medium tracking-wide uppercase transition-all ${activeTab === 'profile' ? 'text-[#d4af37] border-b-2 border-[#d4af37]' : 'text-zinc-500 hover:text-zinc-300'}`}>Tài Khoản</button>
             </div>
 
             {activeTab === 'menu' && (
               activeMenuItems.length === 0 ? (
-                <div className="text-center p-10 bg-white rounded-xl border border-gray-200"><p className="text-gray-500">Admin chưa cập nhật món ăn cho hôm nay.</p></div>
+                <div className="lux-card text-center py-16"><p className="text-zinc-500 font-light italic">Đầu bếp đang chuẩn bị thực đơn, vui lòng quay lại sau...</p></div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {activeMenuItems.map(item => {
                     const qty = quantities[item.id] || 0;
                     const mainOpt = selectedMainOptions[item.id] || 'Handicap';
                     const subOpt = selectedSubOptions[item.id] || 'Trên';
                     
                     return (
-                      <div key={item.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 justify-between">
+                      <div key={item.id} className={`lux-card p-6 flex flex-col md:flex-row gap-8 transition-all ${qty > 0 ? 'border-[#d4af37]' : 'border-zinc-800'}`}>
                         <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-800">{item.name}</h3>
-                          {item.note && <p className="text-sm text-gray-500 mt-1">{item.note}</p>}
+                          <h3 className="text-2xl font-serif text-[#d4af37] mb-2">{item.name}</h3>
+                          {item.note && <p className="text-sm text-zinc-400 font-light mb-6 leading-relaxed">{item.note}</p>}
                           
-                          <div className="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Lựa chọn 1</p>
-                            <div className="flex gap-4 mb-3 border-b border-gray-200 pb-3">
-                              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name={`main-${item.id}`} value="Handicap" checked={mainOpt === 'Handicap'} onChange={() => setSelectedMainOptions({...selectedMainOptions, [item.id]: 'Handicap'})} className="accent-blue-600"/> Handicap
-                              </label>
-                              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name={`main-${item.id}`} value="Under/Over" checked={mainOpt === 'Under/Over'} onChange={() => setSelectedMainOptions({...selectedMainOptions, [item.id]: 'Under/Over'})} className="accent-blue-600"/> Under/Over
-                              </label>
-                            </div>
-                            <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Lựa chọn 2</p>
-                            <div className="flex gap-4">
-                              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name={`sub-${item.id}`} value="Trên" checked={subOpt === 'Trên'} onChange={() => setSelectedSubOptions({...selectedSubOptions, [item.id]: 'Trên'})} className="accent-blue-600"/> Trên
-                              </label>
-                              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name={`sub-${item.id}`} value="Dưới" checked={subOpt === 'Dưới'} onChange={() => setSelectedSubOptions({...selectedSubOptions, [item.id]: 'Dưới'})} className="accent-blue-600"/> Dưới
-                              </label>
+                          <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                              <div>
+                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Tùy chọn phong cách</p>
+                                <div className="flex gap-4">
+                                  <label className="flex items-center text-sm text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                    <input type="radio" name={`main-${item.id}`} value="Handicap" checked={mainOpt === 'Handicap'} onChange={() => setSelectedMainOptions({...selectedMainOptions, [item.id]: 'Handicap'})} /> Handicap
+                                  </label>
+                                  <label className="flex items-center text-sm text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                    <input type="radio" name={`main-${item.id}`} value="Under/Over" checked={mainOpt === 'Under/Over'} onChange={() => setSelectedMainOptions({...selectedMainOptions, [item.id]: 'Under/Over'})} /> Under/Over
+                                  </label>
+                                </div>
+                              </div>
+                              <div className="hidden sm:block w-px h-10 bg-zinc-800"></div>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Hương vị phụ</p>
+                                <div className="flex gap-4">
+                                  <label className="flex items-center text-sm text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                    <input type="radio" name={`sub-${item.id}`} value="Trên" checked={subOpt === 'Trên'} onChange={() => setSelectedSubOptions({...selectedSubOptions, [item.id]: 'Trên'})} /> Trên
+                                  </label>
+                                  <label className="flex items-center text-sm text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                    <input type="radio" name={`sub-${item.id}`} value="Dưới" checked={subOpt === 'Dưới'} onChange={() => setSelectedSubOptions({...selectedSubOptions, [item.id]: 'Dưới'})} /> Dưới
+                                  </label>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="w-full sm:w-48 bg-gray-50 p-3 rounded-lg border border-gray-200 h-fit">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-gray-700">Số lượng:</span>
-                            <span className="font-bold text-lg text-blue-600">{qty}</span>
-                          </div>
-                          <input type="range" min="0" max="10" step="2" value={qty} onChange={(e) => handleSliderChange(item.id, e.target.value)} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"/>
-                          <div className="flex justify-between text-xs text-gray-400 mt-1"><span>0</span><span>10</span></div>
+                        <div className="w-full md:w-48 flex flex-col justify-center items-center border-t md:border-t-0 md:border-l border-zinc-800 pt-6 md:pt-0 md:pl-8">
+                          <span className="text-xs uppercase tracking-widest text-zinc-500 mb-2">Số lượng</span>
+                          <span className={`text-4xl font-serif mb-6 ${qty > 0 ? 'text-white' : 'text-zinc-700'}`}>{qty}</span>
+                          <input type="range" min="0" max="10" step="2" value={qty} onChange={(e) => handleSliderChange(item.id, e.target.value)} />
+                          <div className="flex justify-between w-full text-[10px] text-zinc-500 mt-2 font-mono"><span>0</span><span>10</span></div>
                         </div>
                       </div>
                     );
                   })}
-                  <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-20">
-                    <div className="max-w-2xl mx-auto">
-                      <button onClick={handleOrder} className="w-full bg-green-600 text-white font-bold py-3 rounded-xl flex justify-center gap-2 hover:bg-green-700"><Icon name="ShoppingCart" size={20} /> Xác Nhận Đặt Món</button>
+                  
+                  {/* Fixed Bottom Bar */}
+                  <div className="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800 z-30">
+                    <div className="max-w-4xl mx-auto flex justify-end">
+                      <button onClick={handleOrder} className="lux-btn w-full md:w-auto py-4 px-10 text-sm tracking-widest flex justify-center items-center gap-3">
+                        <Icon name="Utensils" size={16} /> Gửi Yêu Cầu Cho Bếp Trưởng
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -573,34 +744,46 @@
             {activeTab === 'history' && (
               <div className="space-y-4">
                 {myOrders.length === 0 ? (
-                  <div className="text-center p-10 bg-white rounded-xl border border-gray-200"><p className="text-gray-500">Bạn chưa đặt món nào.</p></div>
+                  <div className="lux-card text-center py-16"><p className="text-zinc-500 font-light italic">Quý khách chưa gọi món nào.</p></div>
                 ) : (
                   myOrders.map(order => {
                     const item = menuItems.find(m => m.id === order.itemId);
                     const isConfirmed = order.status === 'confirmed';
                     return (
-                      <div key={order.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-800">{item ? item.name : 'Món đã xóa'}</h3>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Lúc: <span className="font-medium text-gray-800 mr-1">{order.time || '--:--'}</span> 
-                            ngày <span className="font-medium text-gray-800 mr-3">{order.date || 'Chưa rõ'}</span>
-                            Tùy chọn: <span className="font-medium text-blue-600">{order.option}</span>
-                          </p>
-                          <div className="mt-2">
-                            {isConfirmed ? <span className="text-green-600 flex items-center gap-1 text-sm font-medium"><Icon name="CheckCircle" size={16}/> Admin đã chốt đơn</span>
-                            : <span className="text-orange-500 flex items-center gap-1 text-sm font-medium"><Icon name="Clock" size={16}/> Chờ admin xác nhận</span>}
+                      <div key={order.id} className="lux-card p-6 flex flex-col md:flex-row gap-6 justify-between items-center">
+                        <div className="flex-1 w-full">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-xl font-serif text-[#d4af37]">{item ? item.name : 'Món ăn đã được gỡ'}</h3>
+                            <span className="text-xs text-zinc-500 font-mono bg-zinc-900 border border-zinc-800 px-2 py-1 rounded">{order.time} | {order.date}</span>
+                          </div>
+                          
+                          <p className="text-sm text-zinc-300 mb-4 font-light">Tùy chọn: <span className="font-medium text-white">{order.option}</span></p>
+                          
+                          <div>
+                            {isConfirmed ? (
+                               <span className="inline-flex items-center gap-1.5 text-xs tracking-wide uppercase text-green-500/90 border border-green-500/20 bg-green-500/10 px-3 py-1 rounded-full"><Icon name="CheckCircle" size={14} /> Nhà bếp đã xác nhận</span>
+                            ) : (
+                               <span className="inline-flex items-center gap-1.5 text-xs tracking-wide uppercase text-amber-500/90 border border-amber-500/20 bg-amber-500/10 px-3 py-1 rounded-full animate-pulse"><Icon name="Clock" size={14} /> Chờ nhà bếp xác nhận</span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg border border-gray-200 w-full sm:w-auto h-fit">
-                          {isConfirmed ? <div className="px-4 py-2 font-bold text-lg text-gray-700">Số lượng: {order.quantity}</div> : (
+
+                        <div className="w-full md:w-auto flex flex-row md:flex-col items-center justify-between md:justify-center gap-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/50">
+                          {isConfirmed ? (
+                             <div className="text-center w-full">
+                               <p className="text-[10px] uppercase tracking-widest text-zinc-500">Phần ăn</p>
+                               <p className="text-3xl font-serif text-white">{order.quantity}</p>
+                             </div>
+                          ) : (
                             <>
-                              <div className="flex items-center gap-3">
-                                <button onClick={() => handleAdjustQuantity(order.id, order.quantity - 2)} className="w-8 h-8 bg-white border border-gray-300 rounded font-bold">-</button>
-                                <span className="font-bold text-lg w-6 text-center">{order.quantity}</span>
-                                <button onClick={() => handleAdjustQuantity(order.id, order.quantity + 2)} className="w-8 h-8 bg-white border border-gray-300 rounded font-bold">+</button>
+                              <div className="flex items-center gap-4">
+                                <button onClick={() => handleAdjustQuantity(order.id, order.quantity - 2)} className="w-8 h-8 rounded-full border border-zinc-600 text-zinc-400 hover:text-white hover:border-[#d4af37] transition-colors flex justify-center items-center pb-0.5">-</button>
+                                <span className="font-serif text-2xl text-white w-6 text-center">{order.quantity}</span>
+                                <button onClick={() => handleAdjustQuantity(order.id, order.quantity + 2)} className="w-8 h-8 rounded-full border border-zinc-600 text-zinc-400 hover:text-white hover:border-[#d4af37] transition-colors flex justify-center items-center pb-0.5">+</button>
                               </div>
-                              <button onClick={() => handleAdjustQuantity(order.id, 0)} className="p-2 text-red-500 hover:bg-red-50 rounded"><Icon name="Trash2" size={20} /></button>
+                              <button onClick={() => handleAdjustQuantity(order.id, 0)} className="text-xs text-red-400/80 hover:text-red-400 uppercase tracking-wider flex items-center gap-1 transition-colors">
+                                <Icon name="Trash2" size={12} /> Hủy món
+                              </button>
                             </>
                           )}
                         </div>
@@ -612,18 +795,18 @@
             )}
 
             {activeTab === 'profile' && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Icon name="Key" size={20}/> Đổi mật khẩu đăng nhập</h2>
-                <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="lux-card p-8 max-w-md mx-auto">
+                <h2 className="font-serif text-xl text-white mb-6 border-b border-zinc-800 pb-3">Đổi mật khẩu bảo mật</h2>
+                <form onSubmit={handleChangePassword} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu cũ</label>
-                    <input type="password" value={oldPass} onChange={(e) => setOldPass(e.target.value)} className="w-full p-2 border border-gray-300 rounded outline-none focus:border-green-500" required />
+                    <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Mật khẩu hiện tại</label>
+                    <input type="password" value={oldPass} onChange={(e) => setOldPass(e.target.value)} className="lux-input" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
-                    <input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="w-full p-2 border border-gray-300 rounded outline-none focus:border-green-500" required />
+                    <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Mật khẩu mới</label>
+                    <input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="lux-input" required />
                   </div>
-                  <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700">Cập Nhật Mật Khẩu</button>
+                  <button type="submit" className="lux-btn w-full py-3 mt-2 text-sm">Lưu thay đổi</button>
                 </form>
               </div>
             )}
@@ -688,33 +871,18 @@
           {!currentUser ? (
             <Login users={users} setCurrentUser={setCurrentUser} />
           ) : currentUser.role === 'admin' ? (
-            <AdminDashboard 
-              users={users} 
-              menuItems={menuItems} 
-              orders={orders} 
-              currentUser={currentUser} 
-              setCurrentUser={setCurrentUser} 
-              showMessage={showMessage} 
-              showConfirm={showConfirm} 
-            />
+            <AdminDashboard users={users} menuItems={menuItems} orders={orders} currentUser={currentUser} setCurrentUser={setCurrentUser} showMessage={showMessage} showConfirm={showConfirm} />
           ) : (
-            <UserDashboard 
-              menuItems={menuItems} 
-              orders={orders} 
-              currentUser={currentUser} 
-              setCurrentUser={setCurrentUser} 
-              showMessage={showMessage} 
-              showConfirm={showConfirm} 
-            />
+            <UserDashboard menuItems={menuItems} orders={orders} currentUser={currentUser} setCurrentUser={setCurrentUser} showMessage={showMessage} showConfirm={showConfirm} />
           )}
           
           {messageBox && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl">
-                <p className="text-gray-800 font-medium mb-6 text-center">{messageBox.message}</p>
-                <div className="flex gap-3 justify-center">
-                  {messageBox.type === 'confirm' && <button onClick={() => setMessageBox(null)} className="px-4 py-2 bg-gray-200 rounded-lg font-medium hover:bg-gray-300 transition">Hủy</button>}
-                  <button onClick={() => { if (messageBox.onConfirm) messageBox.onConfirm(); setMessageBox(null); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Đồng ý</button>
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="lux-card max-w-sm w-full p-8 text-center border-[#d4af37]/30 shadow-[0_0_40px_rgba(212,175,55,0.1)]">
+                <p className="text-lg font-light text-white mb-8 leading-relaxed">{messageBox.message}</p>
+                <div className="flex gap-4 justify-center">
+                  {messageBox.type === 'confirm' && <button onClick={() => setMessageBox(null)} className="px-6 py-2.5 rounded-md border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors text-sm uppercase tracking-wider">HỦY</button>}
+                  <button onClick={() => { if (messageBox.onConfirm) messageBox.onConfirm(); setMessageBox(null); }} className="lux-btn px-8 py-2.5 text-sm">ĐỒNG Ý</button>
                 </div>
               </div>
             </div>
