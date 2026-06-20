@@ -281,6 +281,8 @@
       const [activeTab, setActiveTab] = useState('menu');
       const [filterUser, setFilterUser] = useState('all');
       const [filterDate, setFilterDate] = useState('');
+      const [filterOrderFood, setFilterOrderFood] = useState('all');
+      const [filterHistoryFood, setFilterHistoryFood] = useState('all');
 
       const { date: todayStr } = getVietnamTime();
 
@@ -435,13 +437,31 @@
 
             {activeTab === 'orders' && (
               <div className="lux-card p-6">
-                <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3">
-                  <h2 className="font-serif text-xl text-white">Yêu cầu phục vụ hôm nay</h2>
-                  <span className="text-[#d4af37] text-sm tracking-wider">{todayStr}</span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 border-b border-zinc-800 pb-4 gap-4">
+                  <div>
+                    <h2 className="font-serif text-xl text-white mb-1">Yêu cầu phục vụ hôm nay</h2>
+                    <span className="text-[#d4af37] text-sm tracking-wider">{todayStr}</span>
+                  </div>
+                  <div>
+                    <select 
+                      value={filterOrderFood} 
+                      onChange={(e) => setFilterOrderFood(e.target.value)} 
+                      className="lux-input py-1.5 text-sm min-w-[160px]"
+                    >
+                      <option value="all">Tất cả món ăn</option>
+                      {menuItems.map(item => (
+                        <option key={item.id} value={item.id}>{item.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 
-                {orders.filter(o => o.date === todayStr || !o.date).length === 0 ? (
-                  <p className="text-zinc-500 italic py-8 text-center font-light">Chưa có yêu cầu nào cho ngày hôm nay.</p>
+                {orders.filter(o => {
+                  const matchDate = o.date === todayStr || !o.date;
+                  const matchFood = filterOrderFood === 'all' ? true : o.itemId === filterOrderFood;
+                  return matchDate && matchFood;
+                }).length === 0 ? (
+                  <p className="text-zinc-500 italic py-8 text-center font-light">Chưa có yêu cầu nào cho món này hôm nay.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -457,7 +477,11 @@
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800/50">
-                        {orders.filter(o => o.date === todayStr || !o.date).map((order) => {
+                        {orders.filter(o => {
+                          const matchDate = o.date === todayStr || !o.date;
+                          const matchFood = filterOrderFood === 'all' ? true : o.itemId === filterOrderFood;
+                          return matchDate && matchFood;
+                        }).map((order) => {
                           const item = menuItems.find(m => m.id === order.itemId);
                           return (
                             <tr key={order.id} className="hover:bg-zinc-800/20 transition-colors">
@@ -492,7 +516,7 @@
               <div className="lux-card p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 border-b border-zinc-800 pb-6">
                   <h2 className="font-serif text-xl text-white">Sổ Ghi Chép Lịch Sử</h2>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-4">
                     <div>
                       <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Ngày đặt</label>
                       <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="lux-input py-1.5 text-sm" />
@@ -506,13 +530,23 @@
                         ))}
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">Món ăn</label>
+                      <select value={filterHistoryFood} onChange={(e) => setFilterHistoryFood(e.target.value)} className="lux-input py-1.5 text-sm min-w-[140px]">
+                        <option value="all">Tất cả món</option>
+                        {menuItems.map(item => (
+                          <option key={item.id} value={item.id}>{item.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
                 
                 {orders.filter(o => {
                   const matchDate = filterDate ? o.date === filterDate : true;
                   const matchUser = filterUser === 'all' ? true : o.username === filterUser;
-                  return matchDate && matchUser;
+                  const matchFood = filterHistoryFood === 'all' ? true : o.itemId === filterHistoryFood;
+                  return matchDate && matchUser && matchFood;
                 }).length === 0 ? <p className="text-zinc-500 italic text-center py-8 font-light">Không tìm thấy bản ghi nào.</p> : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -530,7 +564,8 @@
                         {orders.filter(o => {
                           const matchDate = filterDate ? o.date === filterDate : true;
                           const matchUser = filterUser === 'all' ? true : o.username === filterUser;
-                          return matchDate && matchUser;
+                          const matchFood = filterHistoryFood === 'all' ? true : o.itemId === filterHistoryFood;
+                          return matchDate && matchUser && matchFood;
                         }).sort((a, b) => new Date(b.date || '2000-01-01') - new Date(a.date || '2000-01-01')).map((order) => {
                           const item = menuItems.find(m => m.id === order.itemId);
                           return (
